@@ -155,6 +155,11 @@ export const CLI_COMMAND_REGISTRATIONS = {
     (module, context) =>
       module.registerErlangCommands(context.cli, context.logger),
   ),
+  unreal: plain(
+    () => import("./unrealCommands.js"),
+    (module, context) =>
+      module.registerUnrealCommands(context.cli, context.logger),
+  ),
   v8CodeCache: plain(
     () => import("./v8CodeCacheCommands.js"),
     (module, context) =>
@@ -443,6 +448,7 @@ const CLI_FAMILY_REGISTRATIONS: {
     "rust",
     "pythonPyc",
     "erlang",
+    "unreal",
     "v8CodeCache",
     "sqlite",
     "artifact",
