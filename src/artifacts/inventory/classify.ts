@@ -1,3 +1,4 @@
+import { ParseFailureError } from "../../domain/parseFailure.js";
 import {
   artifactOperationCause,
   ArtifactReaderFailure,
@@ -365,7 +366,10 @@ const classifyRootFormat = async (
   }
   if (nesContainerFormat(evidence.prefix) !== undefined) {
     const parsed = parseInesLayout(evidence.prefix, archiveBytes);
-    if (!parsed.ok) throw new ArtifactReaderFailure("format", parsed.error);
+    if (!parsed.ok)
+      throw new ArtifactReaderFailure("format", parsed.error.detail, {
+        cause: new ParseFailureError(parsed.error),
+      });
     return "ines";
   }
   const classificationPath = artifactNameForClassification(
