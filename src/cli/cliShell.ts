@@ -16,6 +16,7 @@ import type {
 import type { CliResultOutput } from "./cliResultOutput.js";
 import { runCliCommand } from "./runCliCommand.js";
 import { completionHelpNote, createCliCompletions } from "./completions.js";
+import { recordHelpOutput } from "./outputFormatHelp.js";
 import { serveDiscovery } from "./discovery.js";
 import { reportUnknownMcpSubcommand } from "./mcpBuiltinCommands.js";
 import { serveMcpRegistration } from "./mcpRegistration.js";
@@ -118,29 +119,27 @@ export const createCliShell = (options: CliShellOptions): CliInstance => {
       serveOptions ?? {},
     );
     if (registration !== undefined) return registration;
-    const result = reportUnknownMcpSubcommand(
-      cli.name,
-      global,
-      serveOptions ?? {},
-    )
+    const help = recordHelpOutput(global.arguments, serveOptions ?? {});
+    const result = reportUnknownMcpSubcommand(cli.name, global, help.options)
       ? Promise.resolve()
       : (serveDiscovery(
           cli,
           global.arguments,
-          serveOptions ?? {},
+          help.options,
           updateEnvironment,
           global,
         ) ??
         runCliCommand(
           cli,
           global,
-          serveOptions ?? {},
+          help.options,
           updateEnvironment,
           options.resultOutput,
         ));
     const note = completionHelpNote(global);
-    if (note === undefined) return result;
-    return result.then(() => {
+    const completed = help.finish(result);
+    if (note === undefined) return completed;
+    return completed.then(() => {
       const write =
         serveOptions?.stdout ?? ((text: string) => process.stdout.write(text));
       write(`\n${note}`);
