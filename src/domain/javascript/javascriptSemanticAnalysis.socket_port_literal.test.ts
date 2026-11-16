@@ -13,6 +13,15 @@ import { analyzeJavaScriptSemantics } from "./javascriptSemanticAnalysis.js";
  *   net.connect(65536) / -1 / 1.5     -> THREW ERR_SOCKET_BAD_PORT
  *   net.connect(NaN) / Infinity       -> THREW ERR_SOCKET_BAD_PORT
  *   net.connect(0n) / true / null     -> THREW ERR_INVALID_ARG_TYPE
+ *   net.connect(-0n) / ~0n / -(1n)    -> THREW ERR_INVALID_ARG_TYPE
+ *   net.connect(+0n)                  -> THREW TypeError (before the call)
+ *   net.connect(-0n, { port: 443 })   -> THREW ERR_INVALID_ARG_TYPE (no merge)
+ *   tls.connect(-0n) / ~0n            -> THREW ERR_INVALID_ARG_TYPE
+ *   tls.connect(+0n, { port: 443 })   -> THREW TypeError (before the call)
+ *   tls.connect(-0n, () => {}) / undefined / {} / "host" / "host", {} -> THREW
+ *   tls.connect(-0n, { port: 443 })   -> Socket created (later options win)
+ *   tls.connect(-0n, undefined, { port: 443 }) -> Socket created
+ *   tls.connect(~0n, { port: 443 })   -> Socket created (later options win)
  *   net.connect("")                   -> THREW ERR_SOCKET_BAD_PORT
  *   net.connect("/tmp/x.sock")        -> Socket created (Unix socket path)
  *   net.connect({ port: 80 })         -> Socket created
@@ -32,6 +41,20 @@ it.each([
   ["an Infinity port", `net.connect(Infinity)`],
   ["an overflowing numeric port", `net.connect(1e400)`],
   ["a BigInt port", `net.connect(0n)`],
+  ["a negated BigInt port", `net.connect(-0n)`],
+  ["a bitwise-not BigInt port", `net.connect(~0n)`],
+  ["a parenthesized negated BigInt port", `net.connect(-(1n))`],
+  ["a unary plus BigInt port", `tls.connect(+0n)`],
+  [
+    "a tls unary plus BigInt port with options",
+    `tls.connect(+0n, { port: 443 })`,
+  ],
+  ["a tls negated BigInt port", `tls.connect(-0n)`],
+  ["a tls negated BigInt port with a callback", `tls.connect(-0n, () => {})`],
+  ["a tls negated BigInt port with undefined", `tls.connect(-0n, undefined)`],
+  ["a tls negated BigInt port with empty options", `tls.connect(-0n, {})`],
+  ["a tls negated BigInt port with a host", `tls.connect(-0n, "host", {})`],
+  ["a net negated BigInt port with options", `net.connect(-0n, { port: 443 })`],
   ["a boolean port", `net.connect(true)`],
   ["a null port", `net.connect(null)`],
   ["an empty path", `net.connect("")`],
@@ -58,6 +81,26 @@ it.each([
   [
     "a TLS port supplied by later options",
     `tls.connect(void 0, { port: 443 })`,
+    "connect",
+  ],
+  [
+    "a tls negated BigInt port that later options replace",
+    `tls.connect(-0n, { port: 443 })`,
+    "connect",
+  ],
+  [
+    "a tls bitwise-not BigInt port that later options replace",
+    `tls.connect(~0n, { port: 443 })`,
+    "connect",
+  ],
+  [
+    "a tls negated BigInt port that a third argument replaces",
+    `tls.connect(-0n, undefined, { port: 443 })`,
+    "connect",
+  ],
+  [
+    "a tls negated BigInt port with a computed later argument",
+    `tls.connect(-0n, p)`,
     "connect",
   ],
   ["a tls port", `tls.connect(80)`, "connect"],
