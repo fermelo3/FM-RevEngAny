@@ -10,6 +10,10 @@ import { nesContainerFormat, parseInesLayout } from "./inesContainer.js";
 import { hasUImageMagic } from "./uimageFormat.js";
 import { hasUnityFsHeader } from "./unityfsFormat.js";
 import { hasMftFileRecordHeader } from "./windows/ntfsMft.js";
+import {
+  hasMamSignature,
+  hasPrefetchSignature,
+} from "./windows/prefetchFormat.js";
 import { hasWxapkgEncryptedMagic, hasWxapkgHeader } from "./wxapkgFormat.js";
 import { hasZipSignature } from "./zipPackageFormat.js";
 
@@ -29,6 +33,7 @@ export type RecognizedArtifactFormat = Extract<
   | "esp-flash-image"
   | "esp-image"
   | "fit"
+  | "windows-prefetch"
   | "ntfs-mft"
   | "plist"
 >;
@@ -131,6 +136,10 @@ export const ARTIFACT_FORMAT_RECOGNIZERS: readonly ArtifactFormatRecognizer[] =
         : { state: "refused", format: "esp-image", reason: ESP8266_REFUSAL };
     },
     when("fit", hasFitImagesNode),
+    when(
+      "windows-prefetch",
+      (prefix) => hasPrefetchSignature(prefix) || hasMamSignature(prefix),
+    ),
     when("ntfs-mft", hasMftFileRecordHeader),
     // Binary plists, including keyed archives, often use other extensions.
     when("plist", hasBinaryPlistSignature),
