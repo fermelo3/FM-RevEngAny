@@ -1,5 +1,3 @@
-import { fileIdentity } from "../../fixtures/evidenceSubject.js";
-import { canonicalOutputSchema } from "../../fixtures/canonicalOutputSchema.js";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
@@ -12,10 +10,11 @@ import { parseEvidence, type Evidence } from "../../../src/domain/evidence.js";
 import { applicationFeatureTraceResultSchema } from "../../../src/domain/javascript/javascriptFeatureTraceSchemas.js";
 import { jsonObjectSchema } from "../../../src/domain/jsonValue.js";
 import { createServer } from "../../../src/server/createServer.js";
-import { deliverApplicationExecution } from "../../../src/server/deliverApplicationExecution.js";
-import { settledExecution } from "../../../src/application/ApplicationToolExecutions.js";
 import { traceApplicationFeatureEvidence } from "../../../src/application/javascript/JavaScriptApplicationWorkflowService.js";
 import { createToolResultDelivery } from "../../../src/server/toolResult.js";
+import { deliverApplicationExecution } from "../../../src/server/deliverApplicationExecution.js";
+import { settledExecution } from "../../../src/application/ApplicationToolExecutions.js";
+import { fileIdentity } from "../../fixtures/evidenceSubject.js";
 import { createApplicationMcpHarness } from "../../fixtures/applicationMcpHarness.js";
 import { createTestBinarySession } from "../../fixtures/binarySession.js";
 import { createMcpSchemaValidation } from "../../fixtures/mcpSchemaValidation.js";
@@ -69,7 +68,10 @@ contextBridge.exposeInMainWorld("api",{${CHANNELS.map(
   return root;
 };
 
-const connect = async (profile: "compact", maximumResponseBytes?: number) => {
+const connect = async (
+  profile: "full" | "compact",
+  maximumResponseBytes?: number,
+) => {
   const application = await analyzeJavaScriptApplication({
     input_path: await writeApplication(),
   });
@@ -115,7 +117,7 @@ const bytes = (value: unknown): number =>
 
 type Harness = Awaited<ReturnType<typeof connect>>;
 
-it.each(["compact"] as const)(
+it.each(["full", "compact"] as const)(
   "returns selected feature-trace facts and retains the complete trace (%s)",
   async (profile) => {
     const harness = await connect(profile);
@@ -141,10 +143,13 @@ it.each(["compact"] as const)(
     expect(summary.evidence.normalized_result).toMatchObject({
       kind: "summary",
       parent_operation: "trace_application_feature",
-      artifact: {
-        path: parent.subject.local_path,
-        sha256: fileIdentity(parent.subject).sha256,
-      },
+      artifact:
+        parent.subject === null
+          ? null
+          : {
+              path: parent.subject.local_path,
+              sha256: fileIdentity(parent.subject).sha256,
+            },
       summary: {
         trace_id: full.trace_id,
         source_evidence_id: full.source_evidence_id,
@@ -164,9 +169,7 @@ it.each(["compact"] as const)(
       ({ name }) => name === "trace_application_feature",
     )!;
     expect(ajv.validateSchema(traceTool.inputSchema)).toBe(true);
-    const outputSchema: Record<string, unknown> = canonicalOutputSchema(
-      traceTool.name,
-    );
+    const outputSchema: Record<string, unknown> = traceTool.outputSchema!;
     expect(ajv.validateSchema(outputSchema)).toBe(true);
     const request = {
       kind: "feature-trace",
@@ -338,7 +341,7 @@ const assertRetainedTracePages = async (
 };
 
 it("keeps a no-match trace's discovery and empty collections explicit", async () => {
-  const { inputs, call } = await connect("compact");
+  const { inputs, call } = await connect("full");
   const missing = {
     ...inputs,
     seed: { kind: "string", value: "absent-literal", match: "exact" },
@@ -371,10 +374,7 @@ it("refuses a selected view before tracing when the server retains no Evidence",
     throw new Error("No deep provider");
   });
   const server = createServer({ kind: "fixed", analysis: session });
-  const client = new Client(
-    { name: "feature-trace-fixed", version: "1" },
-    { jsonSchemaValidator: createMcpSchemaValidation() },
-  );
+  const client = new Client({ name: "feature-trace-fixed", version: "1" });
   const [clientTransport, serverTransport] =
     InMemoryTransport.createLinkedPair();
   onTestFinished(async () => {
@@ -408,7 +408,7 @@ it("refuses a selected view before tracing when the server retains no Evidence",
 
 it("recovers an oversized completed trace through its retained paths page", async () => {
   const budget = 64 * 1024;
-  const { session, inputs, call, reply } = await connect("compact", budget);
+  const { session, inputs, call, reply } = await connect("full", budget);
   const failed = await reply("trace_application_feature", inputs);
   const error = parseMcpToolError(failed).error;
   expect(error.code).toBe("resource_constraint");
@@ -460,7 +460,7 @@ it("recovers an oversized completed trace through its retained paths page", asyn
 
 it("names the retained trace and a smaller page when a selected page is oversized", async () => {
   const budget = 64 * 1024;
-  const { session, inputs, reply } = await connect("compact", budget);
+  const { session, inputs, reply } = await connect("full", budget);
   const selection = {
     kind: "feature-trace",
     collection: "nodes",
@@ -519,8 +519,6 @@ it("commits no session facts when cancelled after the trace completes", async ()
   for (const view of [undefined, { kind: "summary" } as const]) {
     const cancelled = new AbortController();
     cancelled.abort(new Error("client cancelled"));
-    // Cancellation can only arrive between completion and commit through this
-    // staging step, which the public workflow cannot schedule deterministically.
     const delivered = await deliverApplicationExecution(
       createToolResultDelivery(undefined),
       {
@@ -532,7 +530,8 @@ it("commits no session facts when cancelled after the trace completes", async ()
       view,
       cancelled.signal,
     );
-    // Same contract as compare_source_to_bundle: a cancelled request leaves the session unchanged.
+    // A derived workflow references sources it has not committed yet, so a
+    // cancelled request leaves the session unchanged.
     expect(parseMcpToolError(delivered)).toMatchObject({
       error: { code: "cancelled" },
     });
