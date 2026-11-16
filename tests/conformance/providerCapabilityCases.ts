@@ -102,6 +102,9 @@ export const PROVIDER_CAPABILITY_CONFORMANCE: Readonly<
   managedWorkflow: {
     cases: ["tests/boundary/mcp/managedWorkflowUnknownIdentityMcp.test.ts"],
   },
+  mavenGradleMetadata: {
+    cases: ["tests/acceptance/mavenGradleMetadataCli.test.ts"],
+  },
   modelArtifact: { cases: ["tests/acceptance/modelArtifactCli.test.ts"] },
   nativeExports: {
     cases: [

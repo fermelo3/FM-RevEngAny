@@ -33,6 +33,7 @@ import * as rustModule from "./cli/rustCommands.js";
 import * as pythonPycModule from "./cli/pythonPycCommands.js";
 import * as erlangModule from "./cli/erlangCommands.js";
 import * as v8CodeCacheModule from "./cli/v8CodeCacheCommands.js";
+import * as mavenGradleMetadataModule from "./cli/mavenGradleMetadataCommands.js";
 import * as sqliteModule from "./cli/sqliteCommands.js";
 import * as artifactModule from "./cli/artifactCommands.js";
 import * as managedModule from "./cli/managedCommands.js";
@@ -89,6 +90,7 @@ const CLI_COMMAND_MODULES: CliCommandModules = {
   pythonPyc: pythonPycModule,
   erlang: erlangModule,
   v8CodeCache: v8CodeCacheModule,
+  mavenGradleMetadata: mavenGradleMetadataModule,
   sqlite: sqliteModule,
   artifact: artifactModule,
   managed: managedModule,

@@ -160,6 +160,11 @@ export const CLI_COMMAND_REGISTRATIONS = {
     (module, context) =>
       module.registerV8CodeCacheCommands(context.cli, context.logger),
   ),
+  mavenGradleMetadata: plain(
+    () => import("./mavenGradleMetadataCommands.js"),
+    (module, context) =>
+      module.registerMavenGradleMetadataCommands(context.cli, context.logger),
+  ),
   sqlite: plain(
     () => import("./sqliteCommands.js"),
     (module, context) =>
@@ -444,6 +449,7 @@ const CLI_FAMILY_REGISTRATIONS: {
     "pythonPyc",
     "erlang",
     "v8CodeCache",
+    "mavenGradleMetadata",
     "sqlite",
     "artifact",
   ],
