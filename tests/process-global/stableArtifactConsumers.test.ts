@@ -111,6 +111,8 @@ import { ArtifactReaderFailure } from "../../src/resources/ArtifactReader.js";
 import { GoBinaryProvider } from "../../src/go/GoBinaryProvider.js";
 import { PythonPycProvider } from "../../src/python/PythonPycProvider.js";
 import { inspectPythonPycInputSchema } from "../../src/domain/python/pythonPyc.js";
+import { RpmPackageProvider } from "../../src/rpm/RpmPackageProvider.js";
+import { inspectRpmPackageInputSchema } from "../../src/domain/rpm/package.js";
 import { PeResourcesProvider } from "../../src/native/pe/PeResourcesProvider.js";
 import { Il2cppMetadataProvider } from "../../src/il2cpp/Il2cppMetadataProvider.js";
 import { ElfNotesProvider } from "../../src/native/elf/ElfNotesProvider.js";
@@ -1026,6 +1028,7 @@ const stableArtifactProviders = [
   ["Windows shortcut", () => new WindowsShortcutProvider()],
   ["native exports", () => new NativeExportsProvider()],
   ["Python pyc", () => new PythonPycProvider()],
+  ["RPM package", () => new RpmPackageProvider()],
 ] as const;
 
 const fileFailureProviders = [
@@ -1042,6 +1045,11 @@ const inspectFileFailure = (
   if (provider instanceof PythonPycProvider)
     return provider.inspect(
       inspectPythonPycInputSchema.parse({ path }),
+      options,
+    );
+  if (provider instanceof RpmPackageProvider)
+    return provider.inspect(
+      inspectRpmPackageInputSchema.parse({ path }),
       options,
     );
   if (provider instanceof ElfNotesProvider)
@@ -1151,7 +1159,8 @@ it.each(
           provider instanceof KernelModuleProvider ||
           provider instanceof KernelBuildConfigProvider ||
           provider instanceof PeCertificatesProvider ||
-          provider instanceof PeResourcesProvider
+          provider instanceof PeResourcesProvider ||
+          provider instanceof RpmPackageProvider
             ? "ArtifactOperationError"
             : "ProviderAdapterError"),
       );

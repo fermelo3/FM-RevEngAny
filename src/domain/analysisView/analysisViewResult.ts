@@ -77,6 +77,7 @@ import {
   pythonPycViewItemsSchema,
   pythonPycSummarySchema,
 } from "./pythonPycView.js";
+import { rpmPackageSummarySchema } from "./rpmPackageView.js";
 import {
   nativeExportsViewRequestSchema,
   nativeExportsViewItemsSchema,
@@ -365,6 +366,7 @@ const viewResultBase = {
   parent_operation: z.enum([
     "trace_web_source_location",
     "inspect_python_pyc",
+    "inspect_rpm_package",
     "inspect_erlang_beam",
     "inspect_devicetree",
     "inspect_byte_entropy",
@@ -570,6 +572,12 @@ export const pythonPycSummaryViewResultSchema = z.strictObject({
   ...summaryViewResultBase,
   parent_operation: z.literal("inspect_python_pyc"),
   summary: pythonPycSummarySchema,
+});
+
+export const rpmPackageSummaryViewResultSchema = z.strictObject({
+  ...summaryViewResultBase,
+  parent_operation: z.literal("inspect_rpm_package"),
+  summary: rpmPackageSummarySchema,
 });
 
 export const pythonPycCodeObjectsViewResultSchema = z.strictObject({
@@ -1373,6 +1381,7 @@ export const analysisViewResultSchema = z.discriminatedUnion("kind", [
     erlangBeamSummaryViewResultSchema,
     devicetreeSummaryViewResultSchema,
     pythonPycSummaryViewResultSchema,
+    rpmPackageSummaryViewResultSchema,
     nativeExportsSummaryViewResultSchema,
     byteEntropySummaryViewResultSchema,
     gdbCommandSummaryViewResultSchema,

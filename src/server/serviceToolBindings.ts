@@ -48,6 +48,7 @@ import type { RecordedCrashService } from "../application/binaryDiagnostics/Reco
 import type { WindowsShortcutService } from "../application/binaryDiagnostics/WindowsShortcutService.js";
 import type { PacketCaptureService } from "../application/captures/PacketCaptureService.js";
 import type { BeamService } from "../application/erlang/BeamService.js";
+import type { RpmPackageService } from "../application/rpm/RpmPackageService.js";
 import type { EvmInterfaceService } from "../application/evm/EvmInterfaceService.js";
 import type { FirmwareAnalysisService } from "../application/firmware/FirmwareAnalysisService.js";
 import { inspectDartAot } from "../application/flutter/DartAotInspection.js";
@@ -612,6 +613,12 @@ const SERVICE_TOOL_BINDINGS = {
       summary: (input, options) => service.inspect(input, options),
     },
   })) satisfies Bind<PythonPycService>,
+  rpmPackage: ((service) => ({
+    inspect_rpm_package: {
+      admission: "application",
+      run: (input, options) => service.inspect(input, options),
+    },
+  })) satisfies Bind<RpmPackageService>,
   erlangBeam: ((service) => ({
     inspect_erlang_beam: {
       admission: "application",

@@ -44,8 +44,10 @@ export const parseLimitConstraint = (
  * The public refusal for a parser's format failure on the selected artifact.
  *
  * Malformed and truncated bytes are an invalid `field` (the input that
- * selected the artifact, `path` by default); unsupported bytes are an
- * unsupported target. A `limit` and any other cause return `undefined`:
+ * selected the artifact, `path` by default), carrying any facts the parser
+ * observed first; unsupported bytes are an unsupported target that keeps those
+ * facts as `diagnostics.observed`. A `limit` and
+ * any other cause return `undefined`:
  * a limit's recovery names a budget only its producer knows.
  */
 export const parseFailureAnalysisError = (
@@ -64,7 +66,13 @@ export const parseFailureAnalysisError = (
         operation,
         path,
         failure.detail,
-        { cause, undecodedContent: failure.undecodedContent },
+        {
+          cause,
+          undecodedContent: failure.undecodedContent,
+          ...(failure.observed === undefined
+            ? {}
+            : { diagnostics: { observed: failure.observed } }),
+        },
       );
     case "malformed":
     case "truncated":
@@ -73,6 +81,9 @@ export const parseFailureAnalysisError = (
           path: [field],
           reason: "invalid_format",
           message: `Selected artifact ${path}: ${failure.detail}`,
+          ...(failure.observed === undefined
+            ? {}
+            : { observed: failure.observed }),
         },
       ]);
   }

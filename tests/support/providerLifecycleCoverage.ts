@@ -1580,6 +1580,20 @@ export const PROVIDER_LIFECYCLE_COVERAGE: Readonly<
     ),
     typedFailures("tests/boundary/filesystem/releaseExposure.test.ts"),
   ),
+  "rea-rpm-package": inProcess(
+    covered(
+      test(
+        "src/application/rpm/RpmPackageService.test.ts",
+        "records the selected artifact and header ranges",
+      ),
+    ),
+    covered(
+      test(
+        "src/application/rpm/RpmPackageService.test.ts",
+        "discards an observation if the caller cancels while the provider completes",
+      ),
+    ),
+  ),
   "rea-v8-code-cache": inProcess(
     covered(
       test(

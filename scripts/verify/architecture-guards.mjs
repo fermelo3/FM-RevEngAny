@@ -734,6 +734,7 @@ const PARSER_FOLDERS = [
   "src/python/",
   // Shared artifact readers (ZIP, directory, ASAR header) live in resources.
   "src/resources/",
+  "src/rpm/",
   "src/rust/",
   "src/v8/",
   "src/wasm/",

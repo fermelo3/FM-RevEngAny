@@ -38,6 +38,24 @@ it.each([
   });
 });
 
+it("keeps facts the parser observed before the failure on the refused path", () => {
+  const cause = new ParseFailureError({
+    kind: "truncated",
+    format: "rpm",
+    detail: "RPM main header range is truncated or outside the file",
+    observed: { lead: { magic: "edabeedb" } },
+  });
+  expect(project(cause)).toMatchObject({
+    issues: [
+      {
+        path: ["path"],
+        reason: "invalid_format",
+        observed: { lead: { magic: "edabeedb" } },
+      },
+    ],
+  });
+});
+
 it("names the input that selected the malformed artifact", () => {
   const cause = malformedInput(
     "apple-ips",
@@ -73,6 +91,21 @@ it("refuses an unsupported form as an unsupported target, keeping undecoded cont
     reason: "compressed build-info section",
     undecodedContent: true,
   });
+});
+
+it("keeps observed facts on an unsupported target as diagnostics", () => {
+  const observed = { lead: { name: "demo-1.0.0-1" } };
+  const error = project(
+    new ParseFailureError({
+      kind: "unsupported",
+      format: "rpm",
+      detail: "RPM signature type 0 is not the header signature format.",
+      undecodedContent: false,
+      observed,
+    }),
+  );
+  expect(error).toBeInstanceOf(AnalysisUnsupportedTargetError);
+  expect(error?.diagnostics).toEqual({ observed });
 });
 
 it("leaves a limit and any other cause to the producer", () => {
