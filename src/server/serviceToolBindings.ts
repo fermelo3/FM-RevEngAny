@@ -55,6 +55,7 @@ import type { FlutterBuildAnalysisService } from "../application/flutter/Flutter
 import type { GoBinaryService } from "../application/go/GoBinaryService.js";
 import type { GpuCodeObjectsService } from "../application/gpu/GpuCodeObjectsService.js";
 import type { Il2cppMetadataService } from "../application/il2cpp/Il2cppMetadataService.js";
+import type { UnityAddressablesService } from "../application/unity/UnityAddressablesService.js";
 import {
   retainAnalysisResultSources,
   recordEvidenceSources,
@@ -600,6 +601,12 @@ const SERVICE_TOOL_BINDINGS = {
       run: (input, options) => service.inspect(input, options, retention),
     },
   })) satisfies Bind<Il2cppMetadataService>,
+  unityAddressables: ((service, retention) => ({
+    inspect_unity_addressables: {
+      admission: "application",
+      run: (input, options) => service.inspect(input, options, retention),
+    },
+  })) satisfies Bind<UnityAddressablesService>,
   rustBinary: ((service, retention) => ({
     inspect_rust_binary: {
       admission: "application",
