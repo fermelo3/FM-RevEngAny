@@ -1,3 +1,4 @@
+import { warcArchiveSummarySchema } from "./warcArchiveView.js";
 import {
   webSourceLocationViewRequestSchema,
   webSourceLocationContextSchema,
@@ -402,6 +403,7 @@ const viewResultBase = {
     "trace_native_values",
     "match_native_functions",
     "procedure_references",
+    "inspect_warc_archive",
   ]),
   parent_digest: digestSchema,
   view_digest: digestSchema,
@@ -544,6 +546,12 @@ export const nativeExportsSummaryViewResultSchema = z.strictObject({
   ...summaryViewResultBase,
   parent_operation: z.literal("inspect_native_exports"),
   summary: nativeExportsSummarySchema,
+});
+
+export const warcArchiveSummaryViewResultSchema = z.strictObject({
+  ...summaryViewResultBase,
+  parent_operation: z.literal("inspect_warc_archive"),
+  summary: warcArchiveSummarySchema,
 });
 
 export const devicetreeSummaryViewResultSchema = z.strictObject({
@@ -1372,6 +1380,7 @@ export const analysisViewResultSchema = z.discriminatedUnion("kind", [
     nativeValueTraceSummaryViewResultSchema,
     erlangBeamSummaryViewResultSchema,
     devicetreeSummaryViewResultSchema,
+    warcArchiveSummaryViewResultSchema,
     pythonPycSummaryViewResultSchema,
     nativeExportsSummaryViewResultSchema,
     byteEntropySummaryViewResultSchema,
